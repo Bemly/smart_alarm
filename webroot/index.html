@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Alarm 设置</title>
+    <style>
+        :root {
+            --primary-color: #2196F3;
+            --bg-color: #f4f4f4;
+            --card-bg: #ffffff;
+            --text-color: #333;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 16px;
+            padding-bottom: 80px;
+        }
+        .card {
+            background: var(--card-bg);
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            padding: 16px;
+            margin-bottom: 16px;
+        }
+        h2 { margin-top: 0; font-size: 1.1rem; color: var(--primary-color); border-bottom: 1px solid #eee; padding-bottom: 8px; }
+        .form-group { margin-bottom: 16px; }
+        label { display: block; margin-bottom: 6px; font-weight: 500; font-size: 0.9rem; }
+        .sub-label { font-size: 0.8rem; color: #666; margin-bottom: 4px; display: block; margin-top: -4px; }
+        input[type="text"], input[type="number"], input[type="time"] {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            box-sizing: border-box;
+            font-size: 1rem;
+            background: #fafafa;
+        }
+        input[type="checkbox"] { transform: scale(1.2); margin-right: 8px; }
+        .checkbox-group { display: flex; align-items: center; padding: 8px 0; }
+        .radio-group { display: flex; flex-direction: column; gap: 8px; }
+        .radio-group label { display: inline-flex; align-items: center; font-weight: normal; }
+        .radio-group input { margin-right: 10px; transform: scale(1.1); }
+        
+        .btn {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 14px 24px;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            width: 100%;
+            box-shadow: 0 4px 6px rgba(33, 150, 243, 0.3);
+            position: fixed;
+            bottom: 16px;
+            left: 16px;
+            width: calc(100% - 32px);
+            z-index: 100;
+        }
+        .btn-small {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 10px 16px;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            font-weight: bold;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+        .btn:active { transform: translateY(1px); box-shadow: 0 2px 4px rgba(33, 150, 243, 0.3); }
+        
+        /* Toast */
+        #toast {
+            visibility: hidden;
+            min-width: 250px;
+            background-color: #333;
+            color: #fff;
+            text-align: center;
+            border-radius: 4px;
+            padding: 12px;
+            position: fixed;
+            z-index: 101;
+            left: 50%;
+            bottom: 80px;
+            transform: translateX(-50%);
+            font-size: 15px;
+            opacity: 0;
+            transition: opacity 0.3s, bottom 0.3s;
+        }
+        #toast.show { visibility: visible; opacity: 1; bottom: 90px; }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <h2>时间设置</h2>
+    <div class="form-group">
+        <label>预期入睡时间 (24h)</label>
+        <input type="time" id="expected_bedtime">
+    </div>
+    <div class="form-group">
+        <label>预期起床时间 (24h)</label>
+        <input type="time" id="expected_wakeup">
+    </div>
+    <div class="form-group">
+        <label>预期睡眠时长 (小时)</label>
+        <input type="number" id="expected_sleep_duration" step="0.1" placeholder="例如 7.5">
+    </div>
+</div>
+
+<div class="card">
+    <h2>唤醒与铃声</h2>
+    <div class="form-group">
+        <label>起床铃声路径</label>
+        <div style="display:flex; gap:8px; margin-bottom: 8px;">
+            <input type="text" id="ringtone_path" placeholder="/system/media/audio/alarms/..." style="flex:1;">
+            <button type="button" class="btn-small" onclick="testRingtone()">测试</button>
+        </div>
+        <select id="ringtone_select" onchange="selectRingtone()" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:6px; background:#fafafa; margin-bottom:4px;"></select>
+        <span class="sub-label">请输入音频绝对路径，或从列表中选择系统铃声</span>
+    </div>
+    <div class="form-group">
+        <label>响铃持续时间 (秒)</label>
+        <input type="number" id="ringtone_duration" placeholder="60">
+    </div>
+    <div class="form-group">
+        <label>响铃间隔时间 (秒)</label>
+        <input type="number" id="ringtone_interval" placeholder="300">
+    </div>
+    <div class="form-group">
+        <label>响铃次数</label>
+        <input type="number" id="ringtone_count" placeholder="3">
+    </div>
+</div>
+
+<div class="card">
+    <h2>智能检测逻辑</h2>
+    <div class="form-group checkbox-group">
+        <input type="checkbox" id="gentle_wake">
+        <label for="gentle_wake" style="margin:0">启用柔和唤醒</label>
+    </div>
+    <div class="form-group">
+        <label>柔和唤醒窗口 (分钟)</label>
+        <span class="sub-label">在预期起床时间前 X 分钟内检测浅睡</span>
+        <input type="number" id="gentle_wake_window" min="5" max="30" placeholder="20">
+    </div>
+    <div class="form-group">
+        <label>心率入睡阈值 (BPM)</label>
+        <input type="number" id="hr_threshold" placeholder="默认 60">
+    </div>
+    <div class="form-group">
+        <label>静息强度阈值</label>
+        <span class="sub-label">Gadgetbridge RAW_INTENSITY</span>
+        <input type="number" id="intensity_threshold" placeholder="默认 60">
+    </div>
+    <div class="form-group">
+        <label>睡眠判定窗口 (采样点数)</label>
+        <input type="number" id="detection_window" placeholder="15">
+    </div>
+</div>
+
+<div class="card">
+    <h2>系统设置</h2>
+    <div class="form-group">
+        <label>数据库轮询模式</label>
+        <div class="radio-group">
+            <label><input type="radio" name="polling_mode" value="dynamic" checked> 动态轮询 (省电/智能)</label>
+            <label><input type="radio" name="polling_mode" value="fixed"> 固定轮询</label>
+        </div>
+    </div>
+    <div class="form-group" id="fixed_polling_group" style="display:none">
+        <label>固定轮询间隔 (分钟)</label>
+        <input type="number" id="check_interval" placeholder="10">
+    </div>
+    <div class="form-group">
+        <label>日志保存天数</label>
+        <input type="number" id="log_retention" placeholder="3">
+    </div>
+</div>
+
+<button class="btn" onclick="saveConfig()">保存并应用配置</button>
+
+<div id="toast">配置已保存</div>
+
+<script>
+    // 模块ID，需与 module.prop 中的 id 一致
+    const MODULE_ID = "smart_alarm"; 
+    const CONFIG_PATH = `/data/adb/modules/${MODULE_ID}/config.conf`;
+
+    async function exec(cmd) {
+        try {
+            if (typeof ksu !== 'undefined' && ksu.exec) {
+                const { stdout, stderr, errno } = await ksu.exec(cmd);
+                if (errno !== 0) throw new Error(stderr || 'Command failed');
+                return stdout;
+            } else {
+                console.log(`[Mock Exec] ${cmd}`);
+                return "";
+            }
+        } catch (e) {
+            console.error(e);
+            alert("执行命令失败: " + e.message);
+            return null;
+        }
+    }
+
+    async function loadConfig() {
+        const content = await exec(`cat "${CONFIG_PATH}"`);
+        if (!content) return;
+
+        const config = {};
+        content.split('\n').forEach(line => {
+            const parts = line.split('=');
+            if (parts.length >= 2) {
+                const key = parts[0].trim();
+                const val = parts.slice(1).join('=').trim().replace(/^"|"$/g, '');
+                config[key] = val;
+            }
+        });
+
+        const setVal = (id, key) => { if(config[key] !== undefined) document.getElementById(id).value = config[key]; };
+        
+        setVal('expected_bedtime', 'EXPECTED_BEDTIME');
+        setVal('expected_wakeup', 'EXPECTED_WAKEUP');
+        setVal('expected_sleep_duration', 'EXPECTED_SLEEP_DURATION');
+        setVal('ringtone_path', 'RINGTONE_PATH');
+        setVal('ringtone_duration', 'RINGTONE_DURATION');
+        setVal('ringtone_interval', 'RINGTONE_INTERVAL');
+        setVal('ringtone_count', 'RINGTONE_COUNT');
+        setVal('gentle_wake_window', 'GENTLE_WAKE_WINDOW');
+        setVal('hr_threshold', 'HR_THRESHOLD');
+        setVal('intensity_threshold', 'INTENSITY_THRESHOLD');
+        setVal('detection_window', 'DETECTION_WINDOW');
+        setVal('log_retention', 'LOG_RETENTION');
+        setVal('check_interval', 'CHECK_INTERVAL');
+
+        if (config.GENTLE_WAKE === 'true') document.getElementById('gentle_wake').checked = true;
+        
+        if (config.POLLING_MODE === 'fixed') {
+            document.querySelector('input[name="polling_mode"][value="fixed"]').checked = true;
+        } else {
+            document.querySelector('input[name="polling_mode"][value="dynamic"]').checked = true;
+        }
+        togglePollingMode();
+    }
+
+    async function saveConfig() {
+        const getVal = (id) => document.getElementById(id).value;
+        
+        const config = {
+            EXPECTED_BEDTIME: getVal('expected_bedtime'),
+            EXPECTED_WAKEUP: getVal('expected_wakeup'),
+            EXPECTED_SLEEP_DURATION: getVal('expected_sleep_duration'),
+            RINGTONE_PATH: getVal('ringtone_path'),
+            RINGTONE_DURATION: getVal('ringtone_duration'),
+            RINGTONE_INTERVAL: getVal('ringtone_interval'),
+            RINGTONE_COUNT: getVal('ringtone_count'),
+            GENTLE_WAKE: document.getElementById('gentle_wake').checked,
+            GENTLE_WAKE_WINDOW: getVal('gentle_wake_window'),
+            HR_THRESHOLD: getVal('hr_threshold'),
+            INTENSITY_THRESHOLD: getVal('intensity_threshold'),
+            DETECTION_WINDOW: getVal('detection_window'),
+            LOG_RETENTION: getVal('log_retention'),
+            POLLING_MODE: document.querySelector('input[name="polling_mode"]:checked').value,
+            CHECK_INTERVAL: getVal('check_interval')
+        };
+
+        let configStr = "";
+        for (const [key, value] of Object.entries(config)) {
+            configStr += `${key}="${value}"\n`;
+        }
+
+        await exec(`echo '${configStr}' > "${CONFIG_PATH}"`);
+        await exec("pkill -f service.sh"); // 重启服务以应用配置
+
+        const toast = document.getElementById("toast");
+        toast.className = "show";
+        setTimeout(() => toast.className = toast.className.replace("show", ""), 3000);
+    }
+
+    function togglePollingMode() {
+        const isFixed = document.querySelector('input[name="polling_mode"][value="fixed"]').checked;
+        document.getElementById('fixed_polling_group').style.display = isFixed ? 'block' : 'none';
+    }
+
+    async function loadRingtones() {
+        const select = document.getElementById('ringtone_select');
+        select.innerHTML = '<option value="">-- 扫描系统铃声中... --</option>';
+        
+        const paths = [
+            "/system/media/audio/alarms",
+            "/product/media/audio/alarms",
+            "/system/product/media/audio/alarms"
+        ];
+        
+        select.innerHTML = '<option value="">-- 选择系统铃声 (或手动输入) --</option>';
+
+        for (const path of paths) {
+            const result = await exec(`ls "${path}"`);
+            if (result && !result.includes("No such file")) {
+                const files = result.split('\n').filter(f => f.trim() !== '');
+                if (files.length > 0) {
+                    const group = document.createElement('optgroup');
+                    group.label = path;
+                    files.forEach(f => {
+                        const option = document.createElement('option');
+                        option.value = `${path}/${f}`;
+                        option.text = f;
+                        group.appendChild(option);
+                    });
+                    select.appendChild(group);
+                }
+            }
+        }
+    }
+
+    function selectRingtone() {
+        const select = document.getElementById('ringtone_select');
+        if (select.value) document.getElementById('ringtone_path').value = select.value;
+    }
+
+    async function testRingtone() {
+        const path = document.getElementById('ringtone_path').value;
+        if (!path) { alert("请先输入或选择铃声路径"); return; }
+        await exec(`am start -a android.intent.action.VIEW -d "file://${path}" -t "audio/*"`);
+    }
+
+    document.querySelectorAll('input[name="polling_mode"]').forEach(el => {
+        el.addEventListener('change', togglePollingMode);
+    });
+
+    loadConfig();
+    loadRingtones();
+</script>
+</body>
+</html>

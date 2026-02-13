@@ -1,0 +1,6 @@
+id=smart_alarm
+name=Smart Sleep Alarm (Gadgetbridge)
+version=v1.0.1
+versionCode=101
+author=0xav10086
+description=基于 Gadgetbridge 数据实现弹性闹钟：检测到实际入睡后，自动设定固定睡眠时长后的系统闹钟。
