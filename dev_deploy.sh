@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# 该文件在开发时使用，用于全量更新，适用于重构了大量文件并需要推送到手机的情况
+
 # 定义变量
 MODULE_ID="smart_alarm"
 REMOTE_TMP="/data/local/tmp/${MODULE_ID}_tmp"

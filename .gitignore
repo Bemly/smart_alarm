@@ -1,0 +1,13 @@
+# macOS 系统文件
+.DS_Store
+
+# 开发脚本 (如果你不想开源这些部署脚本，可以忽略，但建议开源方便他人贡献)
+# dev_deploy.sh
+# dev_update.sh
+
+# 运行时生成的文件
+Log/
+boot_count
+
+# 打包生成的文件
+*.zip

@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# 该文件在开发时使用，用于增量更新，适用于推送单个文件到手机的情况
+
 FILE=$1
 MODULE_PATH="/data/adb/modules/smart_alarm"
 TMP_PATH="/data/local/tmp"
