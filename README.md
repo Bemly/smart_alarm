@@ -4,7 +4,7 @@
 
 ## 📖 简介 (Introduction)
 
-这是一个基于 **Gadgetbridge** 数据库分析的智能唤醒闹钟 KernelSU 模块。
+这是一个基于 **Gadgetbridge** 数据库分析的智能唤醒闹钟 KernelSU/Magisk 模块。
 
 传统的闹钟是定时的（例如固定早上 7:00 响），但它并不关心你昨晚是 23:00 睡的还是凌晨 2:00 才睡。
 **Smart Sleep Alarm** 的核心理念是：**基于实际入睡时间保障睡眠时长，并在浅睡阶段柔和唤醒。**
